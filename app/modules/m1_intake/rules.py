@@ -1,8 +1,9 @@
 from app.reader import read_rows
 from app.report import report,quarantine
-FIELDS="sample_id kind analyte area internal_area level dilution unit batch".split()
+FIELDS="sample_id kind analyte area internal_area level dilution unit batch site".split()
+OPTIONAL=("site",)
 def apply(ctx):
-    rows,bad,blank=read_rows(ctx["text"],FIELDS)
+    rows,bad,blank=read_rows(ctx["text"],FIELDS,OPTIONAL)
     ctx["quarantine"].extend(bad);ctx["blank_rows"]=blank
     ctx["input_count"]=len(rows)+len(bad)+blank
     kept=[];seen={}

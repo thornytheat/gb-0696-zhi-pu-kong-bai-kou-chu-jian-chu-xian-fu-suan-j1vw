@@ -13,9 +13,20 @@ def connect():
 def save(text, result):
     digest=hashlib.sha256((RULE_VERSION+"\n"+text).encode()).hexdigest()
     ident=digest[:16]
+    # 同一规则版本与输入摘要只产生一条批次：已存在则原样复用，重跑不覆盖旧版结论
+    existing=_row(ident)
+    if existing is not None:
+        return get(ident)
+    payload=dict(result,rule_version=RULE_VERSION)
+    if not payload.get("site_summary",{}).get("generated_ok",True):
+        raise BusinessError("SITE_SUMMARY_FAILED","站点代表值生成失败，拒绝写入新批次，旧版结论保持不变",409)
     with connect() as db:
-        db.execute("INSERT OR IGNORE INTO runs(id,digest,result,created) VALUES(?,?,?,?)",(ident,digest,json.dumps(dict(result,rule_version=RULE_VERSION),ensure_ascii=False),datetime.now(timezone.utc).isoformat()))
+        db.execute("INSERT OR IGNORE INTO runs(id,digest,result,created) VALUES(?,?,?,?)",(ident,digest,json.dumps(payload,ensure_ascii=False),datetime.now(timezone.utc).isoformat()))
     return get(ident)
+
+def _row(ident):
+    with connect() as db:
+        return db.execute("SELECT id FROM runs WHERE id=?",(ident,)).fetchone()
 
 def get(ident):
     with connect() as db:

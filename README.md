@@ -6,6 +6,12 @@
 
 最小二乘标曲必须满秩，空白扣除保留负值，浓度按稀释倍数复算；低于检出限保留限定符。
 
+## 站点季度代表值（M7 结果复核）
+
+CSV 可选第10列 `site`（兼容无该列的旧文件）。复核页按站点×检测项给出季度代表浓度：未检出(BELOW_LOD)与空白扣除负值(NEGATIVE_BLANK)统一按各样品 LOD 的 1/2 代换后参与算术均值（规则码 ND_LOD_HALF，依据 HJ 168-2020 检出限管理原则与 LOD/2 通行约定），不当零、负值不直平均；超量程/控制失败样品排除。站点不明（空、N/A、未知等哨兵）样品不混入任何站点，单列且单样品结果可追溯。含代换或排除的站点代表值仅供季度趋势比较，页面明确标注不可直接用于合规判断；全部实测的站点可用于比较，合规判定仍以单样品合格结果为准。
+
+代表值使用 Decimal 确定性计算，同输入重跑结论一致；聚合失败时批次阻断、拒绝写入并保留同摘要旧版结论。证据导出（`GET /api/export/{id}`）含 nd_rule、site_summary、unknown_site，与复核页同源。
+
 ## 启动
 
 ```bash
@@ -28,7 +34,7 @@ docker compose config --quiet
 
 ## 输入与输出
 
-CSV可用UTF-8或GB18030；上传保留字符串编号和物理行号。POST `/api/run` 接收 `text` 字段。`GET /api/runs` 查询历史，`POST /api/review` 接收 id、revision、decision。导出按钮下载唯一证据CSV，含运行摘要与隔离记录。
+CSV可用UTF-8或GB18030；上传保留字符串编号和物理行号，可选 `site` 站点列。POST `/api/run` 接收 `text` 字段。`GET /api/runs` 查询历史，`POST /api/review` 接收 id、revision、decision。导出按钮下载唯一证据CSV，含运行摘要、未检出规则、站点代表值、站点不明样品与隔离记录。
 
 SQLite命名卷保存运行记录。重建演示数据可更换卷名后重启。无需外部网络数据。规则定义见 `docs/DATA-DICTIONARY.md`；边界和测试对应关系见 `docs/DEPTH.md`。
 

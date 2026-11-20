@@ -13,7 +13,7 @@
 | M4 空白扣除 | 运行空白扣除并核对证据 | `POST /api/4` | `app/modules/m4_blank/rules.py` | `tests/test_blank.py` |
 | M5 浓度复算 | 运行浓度复算并核对证据 | `POST /api/5` | `app/modules/m5_concentration/rules.py` | `tests/test_concentration.py` |
 | M6 质控判定 | 运行质控判定并核对证据 | `POST /api/6` | `app/modules/m6_quality/rules.py` | `tests/test_quality.py` |
-| M7 结果复核 | 运行结果复核并核对证据 | `POST /api/7` | `app/modules/m7_review/rules.py` | `tests/test_review.py` |
+| M7 结果复核 | 运行结果复核并核对证据 | `POST /api/7` | `app/modules/m7_review/rules.py` | `tests/test_review.py`、`tests/test_site_summary.py` |
 
 ## 陷阱登记
 
@@ -27,6 +27,9 @@
 | TRAP-14 | 业务键冲突 | 静默采信错误值 | 保留首条并隔离冲突 | `app/modules/m1_intake/rules.py` | `tests/test_intake.py::test_intake_conflicting_key` |
 | TRAP-15 | 单位混合 | 静默采信错误值 | 浓度单位归一 | `app/modules/m2_internal/rules.py` | `tests/test_internal.py::test_internal_units` |
 | TRAP-19 | 多个质控标记 | 静默采信错误值 | 显式优先级 | `app/modules/m6_quality/rules.py` | `tests/test_quality.py::test_quality_priority` |
+| TRAP-21 | 未检出当零/负值直平均 | 站点代表值被拉低或偏离 | LOD/2代换后均值，原值保留 | `app/modules/m7_review/site_summary.py` | `tests/test_site_summary.py::test_negative_and_below_lod_both_substituted_half_lod` |
+| TRAP-22 | 站点不明混入聚合 | 站点结论失真 | 哨兵识别并隔离出聚合、单列追溯 | `app/modules/m7_review/site_summary.py` | `tests/test_site_summary.py::test_unknown_site_sample_not_mixed_into_any_site` |
+| TRAP-23 | 聚合失败污染旧结论 | 重跑覆盖历史结论 | 失败阻断+409拒写+幂等复用 | `app/store.py` | `tests/test_site_summary.py::test_failure_keeps_old_conclusion` |
 
 ## 对账规则
 
@@ -34,4 +37,4 @@
 
 ## 已知不覆盖
 
-不支持超过2MB输入，不执行生产自动放行；异常值需人员复核。
+不支持超过2MB输入，不执行生产自动放行；异常值需人员复核。站点代表值为季度趋势比较口径，含代换/排除时不用于合规判断，合规以单样品合格结果为准。
